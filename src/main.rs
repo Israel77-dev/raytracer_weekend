@@ -1,12 +1,22 @@
-mod lib;
+mod utils;
 use nalgebra::Vector3;
 
-use crate::lib::{color::write_color, ray::Ray};
+use crate::utils::{
+    color::write_color, hittable::Hittable, ray::Ray,
+    sphere::Sphere, Point3,
+};
 
 type Color = Vector3<f32>;
-type Point3 = Vector3<f32>;
 
 fn ray_color(r: Ray) -> Color {
+    let s = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+    if let Some(hr) = s.hit(&r, 0.0, 100.0) {
+        let n = hr.normal;
+
+        return 0.5
+            * Color::new(n.x + 1., n.y + 1., n.z + 1.);
+    }
+
     let unit_direction =
         r.direction() * (1. / (r.direction().norm()));
     let t = 0.5 * (unit_direction.y + 1.);
@@ -36,7 +46,7 @@ fn main() {
     const VERTICAL: Point3 =
         Point3::new(0., VIEWPORT_HEIGHT, 0.);
 
-    let LOWER_LEFT_CORNER: Point3 = ORIGIN
+    let lower_left_corner: Point3 = ORIGIN
         - (HORIZONTAL / 2.)
         - (VERTICAL / 2.)
         - Point3::new(0.0, 0.0, FOCAL_LENGTH);
@@ -54,7 +64,7 @@ fn main() {
 
             let r = Ray::new(
                 ORIGIN,
-                LOWER_LEFT_CORNER
+                lower_left_corner
                     + u * HORIZONTAL
                     + v * VERTICAL
                     - ORIGIN,
