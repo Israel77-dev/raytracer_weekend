@@ -1,4 +1,4 @@
-use std::result;
+
 
 use super::{hittable::HitRecord, Point3};
 
@@ -34,9 +34,9 @@ impl super::hittable::Hittable for Sphere {
         let sqrtd = delta.sqrt();
 
         let mut root = (-half_b - sqrtd) / a;
-        if (root < t_min || root > t_max) {
+        if root < t_min || root > t_max {
             root = (-half_b - sqrtd) / a;
-            if (root < t_min || root > t_max) {
+            if root < t_min || root > t_max {
                 return None;
             }
         }

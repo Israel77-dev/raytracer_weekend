@@ -1,5 +1,3 @@
-use std::thread::Result;
-
 use nalgebra::Vector3;
 
 use super::{ray::Ray, Point3};
@@ -59,7 +57,6 @@ impl<T: Hittable> Hittable for HittableList<T> {
         t_max: f32,
     ) -> Option<HitRecord> {
         let mut result: Option<HitRecord> = None;
-        let mut hit_anything = false;
         let mut closest_so_far = t_max;
 
         for object in self.0.iter() {
