@@ -1,3 +1,5 @@
+use std::result;
+
 use super::{hittable::HitRecord, Point3};
 
 pub struct Sphere {
@@ -41,8 +43,18 @@ impl super::hittable::Hittable for Sphere {
 
         let t = root;
         let p = r.at(t);
-        let normal = (p - self.center) / self.radius;
+        let outward_normal =
+            (p - self.center) / self.radius;
 
-        Some(HitRecord { p, t, normal })
+        let mut record = HitRecord {
+            p,
+            t,
+            normal: outward_normal,
+            front_face: true,
+        };
+
+        record.set_front_face(r, &outward_normal);
+
+        Some(record)
     }
 }
