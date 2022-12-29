@@ -1,43 +1,23 @@
 mod utils;
-use std::f32::INFINITY;
 
-use nalgebra::Vector3;
-use utils::hittable;
+use rand::{distributions::Uniform, Rng};
 
 use crate::utils::{
-    camera::Camera,
-    color::write_color,
-    hittable::{Hittable, HittableList},
-    ray::Ray,
-    sphere::Sphere,
-    Point3,
+    camera::Camera, color::write_color,
+    hittable::HittableList, ray::ray_color, sphere::Sphere,
+    Color, Point3,
 };
 
-type Color = Vector3<f32>;
-
-fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
-    if let Some(hr) = world.hit(r, 0.0, INFINITY) {
-        let n = hr.normal;
-
-        return 0.5 * (n + Color::new(1.0, 1.0, 1.0));
-    }
-
-    let unit_direction =
-        r.direction() * (1. / (r.direction().norm()));
-    let t = 0.5 * (unit_direction.y + 1.0);
-
-    const WHITE: Color = Color::new(1.0, 1.0, 1.0);
-    const BLUE: Color = Color::new(0.5, 0.7, 1.0);
-
-    WHITE.lerp(&BLUE, t)
-}
-
 fn main() {
-    // Image size
+    // Image definition
     const ASPECT_RATIO: f32 = 16. / 9.;
     const IMAGE_WIDTH: u16 = 400;
     const IMAGE_HEIGHT: u16 =
         (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u16;
+
+    // Adjusts
+    const SAMPLES_PER_PIXEL: u32 = 80;
+    const MAX_DEPTH: u32 = 50;
 
     // World
     let mut world: HittableList<Sphere> =
@@ -52,21 +32,38 @@ fn main() {
     // Camera
     let camera = Camera::new();
 
+    // RNG
+    let mut rng = rand::thread_rng();
+    let offset_dist: Uniform<f32> = Uniform::new(0.0, 1.0);
+
     // Header
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
 
     for j in (0..IMAGE_HEIGHT).rev() {
+        eprintln!("Scan lines remaining: {}", j);
         for i in 0..IMAGE_WIDTH {
-            let u = (i as f32) / ((IMAGE_WIDTH - 1) as f32);
-            let v =
-                (j as f32) / ((IMAGE_HEIGHT - 1) as f32);
+            let mut color = Color::new(0.0, 0.0, 0.0);
 
-            let r = camera.get_ray(u, v);
+            for _ in 0..SAMPLES_PER_PIXEL {
+                let u = (i as f32
+                    + rng.sample(offset_dist))
+                    / ((IMAGE_WIDTH - 1) as f32);
 
-            let color = ray_color(&r, &world);
-            write_color(&mut std::io::stdout(), color);
+                let v = (j as f32
+                    + rng.sample(offset_dist))
+                    / ((IMAGE_HEIGHT - 1) as f32);
+
+                let r = camera.get_ray(u, v);
+                color += ray_color(&r, &world, MAX_DEPTH);
+            }
+
+            write_color(
+                &mut std::io::stdout(),
+                color,
+                SAMPLES_PER_PIXEL,
+            );
         }
     }
 }
